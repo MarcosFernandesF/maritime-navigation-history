@@ -1,0 +1,19 @@
+{
+  "name": "maritime-navigation-history",
+  "version": "1.0.0",
+  "description": "MVP para entrega final da disciplina:  INE5458 - Tecnologias Blockchain e Criptomoedas",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "hardhat": "^2.27.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^17.2.3"
+  }
+}
