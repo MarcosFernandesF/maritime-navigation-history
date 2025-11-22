@@ -50,22 +50,35 @@ contract NavigationHistory {
      * @param sailorId The ID of the sailor responsible.
      * @param ipfsHash The CID from IPFS containing the proofs.
      * @param description A short summary of the trip.
+     * @param voyageTimestamp When the trip actually happened (User input).
      */
     function logVoyage(
         uint256 vesselId, 
         uint256 sailorId, 
         string memory ipfsHash, 
-        string memory description
+        string memory description,
+        uint256 voyageTimestamp 
     ) public {
         
-        // Only the owner of the vessel can log a trip for it.
+        // Only the owner can log a voyage
         require(vesselContract.ownerOf(vesselId) == msg.sender, "Error: You are not the owner of this vessel.");
 
-        // Ensure the sailor actually exists
-        require(sailorContract.ownerOf(sailorId) != address(0), "Error: Invalid Sailor ID.");
+        // Prevent registering empty data
+        require(bytes(ipfsHash).length > 0, "Error: IPFS Hash is required.");
+        require(bytes(description).length > 0, "Error: Description is required.");
+
+        // You cannot log a trip that happens in the future
+        require(voyageTimestamp <= block.timestamp, "Error: Voyage date cannot be in the future.");
+
+        // Ensure the sailor token has been minted and exists (owner is not 0x0 address)
+        try sailorContract.ownerOf(sailorId) returns (address sailorOwner) {
+            require(sailorOwner != address(0), "Error: Invalid Sailor ID.");
+        } catch {
+            revert("Error: Sailor ID does not exist.");
+        }
 
         VoyageEntry memory newVoyage = VoyageEntry({
-            timestamp: block.timestamp,
+            timestamp: voyageTimestamp,
             sailorId: sailorId,
             ipfsHash: ipfsHash,
             description: description
@@ -73,7 +86,7 @@ contract NavigationHistory {
 
         vesselVoyages[vesselId].push(newVoyage);
 
-        emit VoyageLogged(vesselId, sailorId, block.timestamp, ipfsHash);
+        emit VoyageLogged(vesselId, sailorId, voyageTimestamp, ipfsHash);
     }
 
     /**

@@ -87,11 +87,15 @@ async function main() {
   // 4. LOG VOYAGE
   console.log("\n[4] Logging Voyage...");
   
+  // Get current time in Seconds (Unix Timestamp)
+  const tripDate = Math.floor(Date.now() / 1000); 
+
   const voyageTx = await historyContract.connect(vesselOwner).logVoyage(
     vesselId, 
     sailorId, 
     "ipfs://QmProofOfGPS_RealLog", 
-    "Delivery trip: Floripa to Rio de Janeiro"
+    "Delivery trip: Floripa to Rio de Janeiro",
+    tripDate
   );
   const voyageReceipt = await voyageTx.wait();
 
@@ -108,8 +112,32 @@ async function main() {
   console.log(`  > Timestamp:   ${logArgs[2]}`);
   console.log(`  > Proof Hash:  ${logArgs[3]}`);
 
-  // 5. FINAL AUDIT
-  console.log("\n[5] Auditing Vessel History (Reading Ledger)...");
+  // 5. Security Check
+  console.log("\n[5] Security Check: Simulating Unauthorized Access...");
+
+  // The 'admin' user tries to log a voyage on 'vesselOwner's' boat
+  // This MUST fail according to the White Paper rules.
+  try {
+    const hackerTx = await historyContract.connect(admin).logVoyage(
+      vesselId,
+      sailorId, 
+      "ipfs://HackedData", 
+      "Fake Trip",
+      Math.floor(Date.now() / 1000)
+    );
+    await hackerTx.wait();
+    console.log("CRITICAL ERROR: The hacker was able to log a trip! Security failed.");
+  } catch (error: any) {
+    if (error.message.includes("Error: You are not the owner")) {
+        console.log("SECURITY PASSED: Unauthorized attempt blocked by Smart Contract.");
+        console.log("   Reason: 'Error: You are not the owner of this vessel.'");
+    } else {
+        console.log("Transaction failed, but with unexpected error:", error.message);
+    }
+  }
+
+  // 6. FINAL AUDIT
+  console.log("\n[6] Auditing Vessel History (Reading Ledger)...");
   
   const history = await historyContract.getVesselHistory(vesselId);
   
